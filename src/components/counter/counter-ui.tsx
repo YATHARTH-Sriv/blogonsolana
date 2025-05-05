@@ -1,25 +1,65 @@
 'use client'
 
 import { Keypair, PublicKey } from '@solana/web3.js'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ExplorerLink } from '../cluster/cluster-ui'
-import { useCounterProgram, useCounterProgramAccount } from './counter-data-access'
+// import { useCounterProgram, useCounterProgramAccount } from './counter-data-access'
 import { ellipsify } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { useCrudProgram, useCrudProgramAccount } from './counter-data-access'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export function CounterCreate() {
-  const { initialize } = useCounterProgram()
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const { createEntry } = useCrudProgram();
+  const { publicKey } = useWallet();
+
+  const handlesubmit = async () => {
+    if (!title || !content) {
+      alert("Please fill in all fields");
+      return;
+    }
+    try {
+      if (publicKey){ 
+      await createEntry.mutateAsync({ title, content, owner: publicKey });
+      setTitle("");
+      setContent("");
+      }
+    } catch (error) {
+      console.error("Error creating entry:", error);
+    }
+  }
 
   return (
-    <Button onClick={() => initialize.mutateAsync(Keypair.generate())} disabled={initialize.isPending}>
-      Create {initialize.isPending && '...'}
-    </Button>
+    <div>
+      <h2 className={'text-2xl'}>Create Crud</h2>
+      <div className="flex flex-col gap-4">
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="input input-bordered w-full"
+        />
+        <input
+          type="text"
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="input input-bordered w-full"
+        />
+        <Button onClick={handlesubmit} disabled={createEntry.isPending}>
+          Create
+        </Button>
+      </div>
+    </div>
   )
 }
 
 export function CounterList() {
-  const { accounts, getProgramAccount } = useCounterProgram()
+  const  { getProgramAccount, accounts }  = useCrudProgram()
 
   if (getProgramAccount.isLoading) {
     return <span className="loading loading-spinner loading-lg"></span>
@@ -32,85 +72,102 @@ export function CounterList() {
     )
   }
   return (
-    <div className={'space-y-6'}>
-      {accounts.isLoading ? (
-        <span className="loading loading-spinner loading-lg"></span>
-      ) : accounts.data?.length ? (
-        <div className="grid md:grid-cols-2 gap-4">
-          {accounts.data?.map((account) => (
-            <CounterCard key={account.publicKey.toString()} account={account.publicKey} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center">
-          <h2 className={'text-2xl'}>No accounts</h2>
-          No accounts found. Create one above to get started.
-        </div>
-      )}
-    </div>
+    <div className={"space-y-6"}>
+    {accounts.isLoading ? (
+      <span className="loading loading-spinner loading-lg"></span>
+    ) : accounts.data?.length ? (
+      <div className="grid gap-4 md:grid-cols-2">
+        {accounts.data?.map((account) => (
+          <CounterCard
+            key={account.publicKey.toString()}
+            account={account.publicKey}
+          />
+        ))}
+      </div>
+    ) : (
+      <div className="text-center">
+        <h2 className={"text-2xl"}>No accounts</h2>
+        No accounts found. Create one above to get started.
+      </div>
+    )}
+  </div>
   )
 }
 
 function CounterCard({ account }: { account: PublicKey }) {
-  const { accountQuery, incrementMutation, setMutation, decrementMutation, closeMutation } = useCounterProgramAccount({
+  const { accountQuery, updateEntry, deleteEntry } = useCrudProgramAccount({
     account,
   })
 
-  const count = useMemo(() => accountQuery.data?.count ?? 0, [accountQuery.data?.count])
+  const { publicKey } = useWallet();
+  const [content, setContent] = useState("");
+  const title = accountQuery.data?.title;
 
+  const handleSubmit = () => {
+    if (publicKey &&  title) {
+      updateEntry.mutateAsync({ title, content });
+    }
+  };
+
+
+  
   return accountQuery.isLoading ? (
     <span className="loading loading-spinner loading-lg"></span>
   ) : (
-    <Card>
-      <CardHeader>
-        <CardTitle>Counter: {count}</CardTitle>
-        <CardDescription>
-          Account: <ExplorerLink path={`account/${account}`} label={ellipsify(account.toString())} />
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => incrementMutation.mutateAsync()}
-            disabled={incrementMutation.isPending}
+    <div className="card card-bordered border-base-300 border-4 text-neutral-content">
+      <div className="card-body items-center text-center">
+        <div className="space-y-6">
+          <h2
+            className="card-title justify-center text-3xl cursor-pointer"
+            onClick={() => accountQuery.refetch()}
           >
-            Increment
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              const value = window.prompt('Set value to:', count.toString() ?? '0')
-              if (!value || parseInt(value) === count || isNaN(parseInt(value))) {
-                return
-              }
-              return setMutation.mutateAsync(parseInt(value))
-            }}
-            disabled={setMutation.isPending}
-          >
-            Set
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => decrementMutation.mutateAsync()}
-            disabled={decrementMutation.isPending}
-          >
-            Decrement
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (!window.confirm('Are you sure you want to close this account?')) {
-                return
-              }
-              return closeMutation.mutateAsync()
-            }}
-            disabled={closeMutation.isPending}
-          >
-            Close
-          </Button>
+            {accountQuery.data?.title}
+          </h2>
+          <p>{accountQuery.data?.content}</p>
+          <div className="card-actions justify-around">
+            <textarea
+              placeholder="Update content here"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="textarea textarea-bordered w-full max-w-xs"
+            />
+            <button
+              className="btn btn-xs lg:btn-md btn-primary"
+              onClick={handleSubmit}
+              disabled={updateEntry.isPending}
+            >
+              Update Journal Entry {updateEntry.isPending && "..."}
+            </button>
+          </div>
+          <div className="text-center space-y-4">
+            <p>
+              <ExplorerLink
+                path={`account/${account}`}
+                label={ellipsify(account.toString())}
+              />
+            </p>
+            <button
+              className="btn btn-xs btn-secondary btn-outline"
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    "Are you sure you want to close this account?"
+                  )
+                ) {
+                  return;
+                }
+                const title = accountQuery.data?.title;
+                if (title) {
+                  return deleteEntry.mutateAsync(title);
+                }
+              }}
+              disabled={deleteEntry.isPending}
+            >
+              Close
+            </button>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

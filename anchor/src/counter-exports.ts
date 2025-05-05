@@ -1,29 +1,29 @@
 // Here we export some useful types and functions for interacting with the Anchor program.
 import { AnchorProvider, Program } from '@coral-xyz/anchor'
 import { Cluster, PublicKey } from '@solana/web3.js'
-import CounterIDL from '../target/idl/counter.json'
-import type { Counter } from '../target/types/counter'
+import crudIDL from '../target/idl/crud.json'
+import type { Crud } from '../target/types/crud'
 
 // Re-export the generated IDL and type
-export { Counter, CounterIDL }
+export { Crud, crudIDL }
 
 // The programId is imported from the program IDL.
-export const COUNTER_PROGRAM_ID = new PublicKey(CounterIDL.address)
+export const crud_PROGRAM_ID = new PublicKey(crudIDL.address)
 
-// This is a helper function to get the Counter Anchor program.
-export function getCounterProgram(provider: AnchorProvider, address?: PublicKey): Program<Counter> {
-  return new Program({ ...CounterIDL, address: address ? address.toBase58() : CounterIDL.address } as Counter, provider)
+// This is a helper function to get the crud Anchor program.
+export function getcrudProgram(provider: AnchorProvider, address?: PublicKey): Program<Crud> {
+  return new Program({ ...crudIDL, address: address ? address.toBase58() : crudIDL.address } as Crud, provider)
 }
 
-// This is a helper function to get the program ID for the Counter program depending on the cluster.
-export function getCounterProgramId(cluster: Cluster) {
+// This is a helper function to get the program ID for the crud program depending on the cluster.
+export function getcrudProgramId(cluster: Cluster) {
   switch (cluster) {
     case 'devnet':
     case 'testnet':
-      // This is the program ID for the Counter program on devnet and testnet.
-      return new PublicKey('coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF')
+      // This is the program ID for the crud program on devnet and testnet.
+      return new PublicKey('9kbP7YvPKV7zxSu3S8MA8yCMQaE3uRDnkbkPHqBG4VVs')
     case 'mainnet-beta':
     default:
-      return COUNTER_PROGRAM_ID
+      return crud_PROGRAM_ID
   }
 }
