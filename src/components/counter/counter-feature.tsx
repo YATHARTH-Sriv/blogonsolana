@@ -15,13 +15,11 @@ export default function CounterFeature() {
   return publicKey ? (
     <div>
       <AppHero
-        title="Counter"
-        subtitle={
-          'Create a new account by clicking the "Create" button. The state of a account is stored on-chain and can be manipulated by calling the program\'s methods (increment, decrement, set, and close).'
-        }
+        title="Your Blogs"
+        subtitle="Create, edit, and manage your on-chain blog posts. All content is stored directly on the Solana blockchain."
       >
-        <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
+        <p className="mb-6 text-sm text-muted-foreground">
+          Program ID: <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
         </p>
         <CounterCreate />
       </AppHero>
@@ -29,9 +27,15 @@ export default function CounterFeature() {
     </div>
   ) : (
     <div className="max-w-4xl mx-auto">
-      <div className="hero py-[64px]">
+      <div className="hero py-16">
         <div className="hero-content text-center">
-          <WalletButton />
+          <div className="max-w-md">
+            <h1 className="text-3xl font-bold mb-6">Connect Your Wallet</h1>
+            <p className="mb-6 text-muted-foreground">
+              You need to connect your Solana wallet to create and manage your blog posts.
+            </p>
+            <WalletButton />
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 'use client'
+
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -7,6 +8,7 @@ import { Menu, X } from 'lucide-react'
 import { ThemeSelect } from '@/components/theme-select'
 import { ClusterUiSelect } from './cluster/cluster-ui'
 import { WalletButton } from '@/components/solana/solana-provider'
+import Image from 'next/image'
 
 export function AppHeader({ links = [] }: { links: { label: string; path: string }[] }) {
   const pathname = usePathname()
@@ -17,58 +19,99 @@ export function AppHeader({ links = [] }: { links: { label: string; path: string
   }
 
   return (
-    <header className="relative z-50 px-4 py-2 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400">
-      <div className="mx-auto flex justify-between items-center">
-        <div className="flex items-baseline gap-4">
-          <Link className="text-xl hover:text-neutral-500 dark:hover:text-white" href="/">
-            <span>Placeholder</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="relative h-8 w-8 overflow-hidden rounded-full">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            </div>
+            <span className="hidden font-bold sm:inline-block">BlogOnSolana</span>
           </Link>
-          <div className="hidden md:flex items-center">
-            <ul className="flex gap-4 flex-nowrap items-center">
-              {links.map(({ label, path }) => (
-                <li key={path}>
-                  <Link
-                    className={`hover:text-neutral-500 dark:hover:text-white ${isActive(path) ? 'text-neutral-500 dark:text-white' : ''}`}
-                    href={path}
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          
+          <nav className="hidden md:flex items-center space-x-6">
+            {links.map(({ label, path }) => (
+              <Link
+                key={path}
+                href={path}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive(path) 
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowMenu(!showMenu)}>
-          {showMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
-
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center space-x-4">
           <WalletButton />
+          <div className="h-6 w-px bg-border/60" />
           <ClusterUiSelect />
           <ThemeSelect />
         </div>
 
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden"
+          onClick={() => setShowMenu(!showMenu)}
+        >
+          {showMenu ? 
+            <X className="h-5 w-5" /> : 
+            <Menu className="h-5 w-5" />
+          }
+        </Button>
+
         {showMenu && (
-          <div className="md:hidden fixed inset-x-0 top-[52px] bottom-0 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-sm">
-            <div className="flex flex-col p-4 gap-4 border-t dark:border-neutral-800">
-              <ul className="flex flex-col gap-4">
+          <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-50 bg-background/98 backdrop-blur-lg border-t border-border/40">
+            <div className="container py-6">
+              <nav className="grid gap-6 pb-6 mb-6 border-b border-border/40">
                 {links.map(({ label, path }) => (
-                  <li key={path}>
-                    <Link
-                      className={`hover:text-neutral-500 dark:hover:text-white block text-lg py-2  ${isActive(path) ? 'text-neutral-500 dark:text-white' : ''} `}
-                      href={path}
-                      onClick={() => setShowMenu(false)}
-                    >
-                      {label}
-                    </Link>
-                  </li>
+                  <Link
+                    key={path}
+                    href={path}
+                    className={`text-base font-medium transition-colors hover:text-primary ${
+                      isActive(path) 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground'
+                    }`}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    {label}
+                  </Link>
                 ))}
-              </ul>
-              <div className="flex flex-col gap-4">
-                <WalletButton />
-                <ClusterUiSelect />
-                <ThemeSelect />
+              </nav>
+              
+              <div className="grid gap-4">
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Connect Wallet
+                  </p>
+                  <WalletButton />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Network
+                  </p>
+                  <ClusterUiSelect />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Theme
+                  </p>
+                  <ThemeSelect />
+                </div>
               </div>
             </div>
           </div>
